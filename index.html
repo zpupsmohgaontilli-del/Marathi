@@ -322,7 +322,7 @@
     // -------------------------------------------------------------
     // REPLACE WITH YOUR PUBLISHED GOOGLE SHEET CSV LINK
     // -------------------------------------------------------------
-    const GOOGLE_SHEET_CSV_URL = "YOUR_GOOGLE_SHEET_CSV_URL_HERE";
+    const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS0n2eFgVShBLqu6M2b6YTKJWgk38m-Gw8ImnAbGI_7WoonyaDLeE3Rw93wfImwBmot-JL1bgYPbt1o/pub?gid=0&single=true&output=csv";
 
     let questions = [];
     let currentIndex = 0;
@@ -456,7 +456,7 @@
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         
-        const optionEmoji = { 'A': '🅰️', 'B': '🅱️', 'C': '🅲️', 'D': '🅳️' }[key];
+        const optionEmoji = { 'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D' }[key];
         btn.innerHTML = `<span>${optionEmoji} ${q[key]}</span> <span class="status-icon"></span>`;
 
         if (selected) {
