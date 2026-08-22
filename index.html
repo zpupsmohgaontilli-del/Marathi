@@ -301,27 +301,19 @@
     return String(val).trim();
   }
 
-  function getObjectProp(obj, possibleKeys) {
-    if (!obj || typeof obj !== 'object') return "";
-    const lowerObjKeys = {};
-    Object.keys(obj).forEach(k => { lowerObjKeys[k.toLowerCase().trim()] = obj[k]; });
-    for (let key of possibleKeys) {
-      let lKey = key.toLowerCase().trim();
-      if (lowerObjKeys[lKey] !== undefined && lowerObjKeys[lKey] !== null) {
-        return extractString(lowerObjKeys[lKey]);
-      }
-    }
-    return "";
-  }
-
   function normalizeApiResponse(rawItems) {
     if (!Array.isArray(rawItems)) return [];
     const parsed = [];
 
     let startIdx = 0;
-    if (Array.isArray(rawItems[0]) && typeof rawItems[0][0] === 'string') {
-      const firstStr = rawItems[0][0].toLowerCase();
-      if (firstStr.includes('word') || firstStr.includes('शब्द') || firstStr.includes('q') || firstStr.includes('प्रश्न')) {
+    // Header detection
+    if (rawItems.length > 0) {
+      const firstRow = rawItems[0];
+      let firstVal = "";
+      if (Array.isArray(firstRow)) firstVal = extractString(firstRow[0]).toLowerCase();
+      else if (typeof firstRow === 'object') firstVal = extractString(Object.values(firstRow)[0]).toLowerCase();
+
+      if (firstVal.includes('word') || firstVal.includes('शब्द') || firstVal.includes('q') || firstVal.includes('प्रश्न')) {
         startIdx = 1;
       }
     }
@@ -333,19 +325,24 @@
       let q = "", optA = "", optB = "", optC = "", optD = "", correct = "";
 
       if (Array.isArray(item)) {
-        q = extractString(item[0]);      // Col A: Question
-        optA = extractString(item[1]);   // Col B: Option A
-        optB = extractString(item[2]);   // Col C: Option B
-        optC = extractString(item[3]);   // Col D: Option C
-        optD = extractString(item[4]);   // Col E: Option D
-        correct = extractString(item[5]);// Col F: Correct Answer
+        // Cells A, B, C, D, E, F mapping directly to array indexes
+        q = extractString(item[0]);       // Cell A: Question
+        optA = extractString(item[1]);    // Cell B: Option A
+        optB = extractString(item[2]);    // Cell C: Option B
+        optC = extractString(item[3]);    // Cell D: Option C
+        optD = extractString(item[4]);    // Cell E: Option D
+        correct = extractString(item[5]); // Cell F: Correct Answer
       } else if (typeof item === 'object') {
-        q = getObjectProp(item, ['q', 'question', 'प्रश्न', 'word']);
-        optA = getObjectProp(item, ['optiona', 'a', 'opta', 'पर्याय a', '1', 'opt1', 'option1']);
-        optB = getObjectProp(item, ['optionb', 'b', 'optb', 'पर्याय b', '2', 'opt2', 'option2']);
-        optC = getObjectProp(item, ['optionc', 'c', 'optc', 'पर्याय c', '3', 'opt3', 'option3']);
-        optD = getObjectProp(item, ['optiond', 'd', 'optd', 'पर्याय d', '4', 'opt4', 'option4']);
-        correct = getObjectProp(item, ['correct', 'answer', 'ans', 'उत्तर', 'correctanswer']);
+        // Handle JSON Object Key Variations
+        const keys = Object.keys(item);
+        const values = Object.values(item);
+
+        q = extractString(item.q || item.question || item['प्रश्न'] || values[0]);
+        optA = extractString(item.optionA || item.optiona || item.a || item.optA || item['पर्याय A'] || values[1]);
+        optB = extractString(item.optionB || item.optionb || item.b || item.optB || item['पर्याय B'] || values[2]);
+        optC = extractString(item.optionC || item.optionc || item.c || item.optC || item['पर्याय C'] || values[3]);
+        optD = extractString(item.optionD || item.optiond || item.d || item.optD || item['पर्याय D'] || values[4]);
+        correct = extractString(item.correct || item.answer || item.ans || item['उत्तर'] || values[5]);
       }
 
       if (q) {
@@ -357,7 +354,7 @@
             { key: 'C', text: optC },
             { key: 'D', text: optD }
           ],
-          correct: correct || optA // fallback
+          correct: correct || optA
         });
       }
     }
@@ -429,12 +426,12 @@
 
     questionEl.textContent = qItem.q;
 
-    // Render options
+    // Render options cleanly
     optionsContainer.innerHTML = "";
     qItem.options.forEach((opt) => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
-      btn.innerHTML = `<strong>${opt.key})</strong>&nbsp;${opt.text || '-'}`;
+      btn.innerHTML = `<strong>${opt.key})</strong>&nbsp;${opt.text}`;
       btn.onclick = () => checkAnswer(opt, qItem, btn);
       optionsContainer.appendChild(btn);
     });
@@ -471,7 +468,7 @@
       selectedBtn.classList.add("incorrect");
       avatar.textContent = "😅";
 
-      // Highlight the actual correct button
+      // Highlight correct button
       qItem.options.forEach((opt, idx) => {
         if (
           opt.key.toLowerCase() === qItem.correct.toLowerCase() ||
