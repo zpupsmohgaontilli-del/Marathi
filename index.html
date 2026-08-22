@@ -138,6 +138,517 @@
       background: #f1f2f6; border: 2px solid #dfe4ea;
       border-radius: clamp(8px, 1vw, 12px);
       padding: clamp(6px, 1vh, 10px);
+      font-size: clamp(0.9rem, 1.3vw, 1.15rem);
+      font-weight: 600; color: #2d3436;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: flex-start;
+      text-align: left; word-break: break-word;
+    }
+    .option-btn:hover:not(:disabled) {
+      background: #e4e7eb; border-color: var(--primary);
+    }
+    .option-btn.correct {
+      background: #2ecc71 !important; color: white !important;
+      border-color: #27ae60 !important;
+    }
+    .option-btn.incorrect {
+      background: #e74c3c !important; color: white !important;
+      border-color: #c0392b !important;
+    }
+
+    .button-group {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: clamp(6px, 1vw, 12px); flex-shrink: 0;
+    }
+    .btn {
+      padding: clamp(8px, 1.2vh, 14px) clamp(6px, 1vw, 12px);
+      border: none; border-radius: clamp(8px, 1vw, 12px);
+      font-size: clamp(0.75rem, 1.2vw, 1.05rem); font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; white-space: nowrap; user-select: none;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none; }
+    .btn-prev { background: var(--prev-btn); color: white; }
+    .btn-prev:hover:not(:disabled) { background: #b84300; }
+    .btn-next { background: #2980b9; color: white; }
+    .btn-next:hover { background: #1f618d; }
+    .credits-footer {
+      margin-top: clamp(6px, 1vh, 12px); font-size: clamp(0.65rem, 0.9vw, 0.85rem);
+      color: rgba(255, 255, 255, 0.85); line-height: 1.4;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: clamp(4px, 0.8vh, 8px); flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 4px; align-items: center;
+    }
+    .credits-footer strong { color: #ffffff; }
+    .visitor-badge-footer {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 10px; border-radius: 12px;
+      font-size: clamp(0.65rem, 0.85vw, 0.8rem);
+      color: #dfe6e9;
+    }
+    @media (max-width: 580px) and (orientation: portrait) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-height: 520px) and (orientation: landscape) {
+      body { padding: 4px; }
+      .app-container { max-height: 98dvh; padding: 6px 12px; }
+      .top-meta-row { display: none; }
+      .card-scene { min-height: 90px; margin-bottom: 4px; }
+      .button-group { gap: 6px; }
+      .btn { padding: 6px 8px; }
+      .credits-footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-doodles">
+  <div class="doodle">🎯</div>
+  <div class="doodle">🧠</div>
+  <div class="doodle">⚡</div>
+  <div class="doodle">🌟</div>
+  <div class="doodle">🏆</div>
+</div>
+
+<div class="app-container" id="app">
+  <div class="top-meta-row">
+    <h1 class="app-title">शब्द खेळ 🎯</h1>
+    <div class="character-container" id="student-avatar">🧭</div>
+  </div>
+
+  <div>
+    <div class="header-stats">
+      <div>⏱️ वेळ: <span id="timer-text">60</span> से.</div>
+      <div class="streak-badge">⚡ गुण: <span id="streak">0</span></div>
+    </div>
+    <div class="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+  </div>
+
+  <div class="card-scene">
+    <div class="card" id="card">
+      <div class="card-label">📍 प्रश्न</div>
+      <div class="card-text" id="question">प्रश्न लोड होत आहे...</div>
+      <div class="options-grid" id="options-container"></div>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()" disabled>⏮️ मागील प्रश्न</button>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">पुढील प्रश्न ⏭️</button>
+  </div>
+
+  <div class="credits-footer">
+    <div>
+      © <strong>Vrushabh H. Borkar</strong> | Graduate Teacher, ZP Upper Primary School, Mohgaon (Tilli)
+    </div>
+    <div class="visitor-badge-footer">
+      👥 एकूण अभ्यासक / भेट देणारे: <strong id="visitor-count">लोड होत आहे...</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzOQIF3IHeBmHFaQdJNuCaDIs_03D7a6j2ZB0SSQQagUIUf7SW45fqd4xYyZNAi2od8aQ/exec";
+
+  let questionsData = [];
+  let unseenPool = [];
+  let historyStack = [];
+  let currentIndex = -1;
+  let timer = 60;
+  let timerInterval = null;
+  let streak = 0;
+  const answeredQuestions = new Set();
+
+  const questionEl = document.getElementById("question");
+  const optionsContainer = document.getElementById("options-container");
+  const timerText = document.getElementById("timer-text");
+  const timerBar = document.getElementById("timer-bar");
+  const streakEl = document.getElementById("streak");
+  const prevBtn = document.getElementById("btn-prev");
+  const nextBtn = document.getElementById("btn-next");
+  const avatar = document.getElementById("student-avatar");
+  const visitorCountEl = document.getElementById("visitor-count");
+
+  function fetchVisitorCount() {
+    const counterKey = "shabd_khel_vrushabh_borkar_visitors";
+    fetch(`https://countapi.mileshilliard.com/api/v1/hit/${counterKey}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.value !== undefined) {
+          visitorCountEl.textContent = Number(data.value).toLocaleString('mr-IN');
+        } else {
+          visitorCountEl.textContent = "1";
+        }
+      })
+      .catch(() => {
+        let localCount = Number(localStorage.getItem("shabd_khel_local_visits") || 0) + 1;
+        localStorage.setItem("shabd_khel_local_visits", localCount);
+        visitorCountEl.textContent = localCount.toLocaleString('mr-IN');
+      });
+  }
+
+  function extractString(val) {
+    if (val === null || val === undefined) return "";
+    return String(val).trim();
+  }
+
+  // Normalizes Devanagari numerals/characters to A, B, C, D index keys
+  function normalizeCorrectAnswer(val) {
+    let str = extractString(val).toLowerCase();
+    
+    const marathiToKey = {
+      '१': 'A', '1': 'A', 'a': 'A', 'अ': 'A', 'क': 'A',
+      '२': 'B', '2': 'B', 'b': 'B', 'ब': 'B', 'ख': 'B',
+      '३': 'C', '3': 'C', 'c': 'C', 'क': 'C', 'ग': 'C',
+      '४': 'D', '4': 'D', 'd': 'D', 'ड': 'D', 'घ': 'D'
+    };
+
+    if (marathiToKey[str]) {
+      return marathiToKey[str];
+    }
+    return str; // return text if full string was provided
+  }
+
+  function normalizeApiResponse(rawItems) {
+    if (!Array.isArray(rawItems)) return [];
+    const parsed = [];
+
+    let startIdx = 0;
+    if (rawItems.length > 0) {
+      const firstRow = rawItems[0];
+      let firstVal = "";
+      if (Array.isArray(firstRow)) firstVal = extractString(firstRow[0]).toLowerCase();
+      else if (typeof firstRow === 'object') firstVal = extractString(Object.values(firstRow)[0]).toLowerCase();
+
+      if (firstVal.includes('word') || firstVal.includes('शब्द') || firstVal.includes('q') || firstVal.includes('प्रश्न')) {
+        startIdx = 1;
+      }
+    }
+
+    for (let i = startIdx; i < rawItems.length; i++) {
+      const item = rawItems[i];
+      if (!item) continue;
+
+      let q = "", optA = "", optB = "", optC = "", optD = "", correct = "";
+
+      if (Array.isArray(item)) {
+        q = extractString(item[0]);       // Cell A: Question
+        
+        // Handles 5 columns: A(Q), B(Opt1), C(Opt2), D(Opt3), E(Correct)
+        // Or 6 columns: A(Q), B(Opt1), C(Opt2), D(Opt3), E(Opt4), F(Correct)
+        if (item.length >= 6) {
+          optA = extractString(item[1]);
+          optB = extractString(item[2]);
+          optC = extractString(item[3]);
+          optD = extractString(item[4]);
+          correct = extractString(item[5]);
+        } else {
+          optA = extractString(item[1]);
+          optB = extractString(item[2]);
+          optC = extractString(item[3]);
+          optD = extractString(item[4]); // If only 3 options, D remains empty
+          correct = extractString(item[4]); // Cell E
+          
+          // If Cell E is purely the indicator (1, 2, 3, A, B, C)
+          if (['1','2','3','4','१','२','३','४','a','b','c','d','अ','ब','क','ड'].includes(correct.toLowerCase())) {
+            optD = ""; // Clear option D text
+          }
+        }
+      } else if (typeof item === 'object') {
+        const values = Object.values(item);
+        q = extractString(item.q || item.question || item['प्रश्न'] || values[0]);
+        optA = extractString(item.optionA || item.a || item['पर्याय A'] || values[1]);
+        optB = extractString(item.optionB || item.b || item['पर्याय B'] || values[2]);
+        optC = extractString(item.optionC || item.c || item['पर्याय C'] || values[3]);
+        
+        if (values.length >= 6) {
+          optD = extractString(item.optionD || item.d || item['पर्याय D'] || values[4]);
+          correct = extractString(item.correct || item.answer || item.ans || item['उत्तर'] || values[5]);
+        } else {
+          correct = extractString(item.correct || item.answer || item.ans || item['उत्तर'] || values[4]);
+        }
+      }
+
+      if (q) {
+        const optionsList = [
+          { key: 'A', label: '१)', text: optA },
+          { key: 'B', label: '२)', text: optB },
+          { key: 'C', label: '३)', text: optC }
+        ];
+
+        if (optD) {
+          optionsList.push({ key: 'D', label: '४)', text: optD });
+        }
+
+        parsed.push({
+          q: q,
+          options: optionsList,
+          correct: normalizeCorrectAnswer(correct)
+        });
+      }
+    }
+    return parsed;
+  }
+
+  function initializeUnseenPool() {
+    unseenPool = Array.from({ length: questionsData.length }, (_, i) => i);
+    for (let i = unseenPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unseenPool[i], unseenPool[j]] = [unseenPool[j], unseenPool[i]];
+    }
+  }
+
+  function fetchQuestions() {
+    questionEl.textContent = "प्रश्न लोड होत आहेत...";
+    nextBtn.disabled = true;
+
+    fetch(API_URL, { method: "GET", redirect: "follow" })
+      .then(res => res.json())
+      .then(data => handleRawData(data))
+      .catch(() => loadJSONP(API_URL));
+  }
+
+  function loadJSONP(url) {
+    const callbackName = "handleSheetJSONP_" + Math.round(100000 * Math.random());
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      const el = document.getElementById("jsonp-loader");
+      if (el) document.body.removeChild(el);
+      handleRawData(data);
+    };
+
+    const script = document.createElement("script");
+    script.id = "jsonp-loader";
+    script.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "callback=" + callbackName;
+    script.onerror = function() {
+      questionEl.textContent = "प्रश्न लोड होऊ शकले नाहीत. कृपया रीफ्रेश करा.";
+      nextBtn.disabled = false;
+    };
+    document.body.appendChild(script);
+  }
+
+  function handleRawData(raw) {
+    let list = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (raw && typeof raw === 'object') {
+      list = raw.data || raw.words || raw.questions || raw.rows || raw.result || Object.values(raw);
+    }
+
+    const parsed = normalizeApiResponse(list);
+    if (parsed.length > 0) {
+      questionsData = parsed;
+      initializeUnseenPool();
+      nextBtn.disabled = false;
+      nextQuestion();
+    } else {
+      questionEl.textContent = "प्रश्न लोड होऊ शकले नाहीत. कृपया सीट लिंक तपासा.";
+      nextBtn.disabled = false;
+    }
+  }
+
+  function displayCurrentQuestion() {
+    if (!questionsData || questionsData.length === 0) return;
+
+    const qIndex = historyStack[currentIndex];
+    const qItem = questionsData[qIndex];
+
+    questionEl.textContent = qItem.q;
+
+    optionsContainer.innerHTML = "";
+    qItem.options.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<strong>${opt.label}</strong>&nbsp;${opt.text}`;
+      btn.onclick = () => checkAnswer(opt, qItem, btn);
+      optionsContainer.appendChild(btn);
+    });
+
+    prevBtn.disabled = (currentIndex <= 0);
+    resetTimer();
+  }
+
+  function checkAnswer(selectedOpt, qItem, selectedBtn) {
+    const allOptBtns = optionsContainer.querySelectorAll(".option-btn");
+    allOptBtns.forEach(btn => btn.disabled = true);
+
+    const isCorrect = 
+      selectedOpt.key.toUpperCase() === qItem.correct.toUpperCase() ||
+      (selectedOpt.text && selectedOpt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase());
+
+    const currentQId = historyStack[currentIndex];
+
+    if (isCorrect) {
+      selectedBtn.classList.add("correct");
+      avatar.classList.add("character-happy");
+      avatar.textContent = "👏";
+
+      if (!answeredQuestions.has(currentQId)) {
+        answeredQuestions.add(currentQId);
+        streak++;
+        streakEl.textContent = streak;
+
+        if (typeof confetti === "function") {
+          confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+        }
+      }
+    } else {
+      selectedBtn.classList.add("incorrect");
+      avatar.textContent = "😅";
+
+      // Highlight correct button
+      qItem.options.forEach((opt, idx) => {
+        if (
+          opt.key.toUpperCase() === qItem.correct.toUpperCase() ||
+          (opt.text && opt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase())
+        ) {
+          allOptBtns[idx].classList.add("correct");
+        }
+      });
+    }
+
+    setTimeout(() => {
+      avatar.classList.remove("character-happy");
+      avatar.textContent = "🧭";
+    }, 1400);
+  }
+
+  function nextQuestion() {
+    if (questionsData.length === 0) return;
+
+    if (currentIndex < historyStack.length - 1) {
+      currentIndex++;
+    } else {
+      if (unseenPool.length === 0) {
+        initializeUnseenPool();
+        if (historyStack.length > 0 && unseenPool[unseenPool.length - 1] === historyStack[currentIndex]) {
+          const top = unseenPool.pop();
+          unseenPool.unshift(top);
+        }
+      }
+      const nextIdx = unseenPool.pop();
+      historyStack.push(nextIdx);
+      currentIndex++;
+    }
+
+    displayCurrentQuestion();
+  }
+
+  function prevQuestion() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      displayCurrentQuestion();
+    }    .doodle:nth-child(4) { top: 82%; right: 6%; animation-delay: 1s; }
+    .doodle:nth-child(5) { top: 48%; left: 2%; animation-delay: 3s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(6deg); }
+    }
+    .app-container {
+      position: relative; z-index: 2;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: clamp(12px, 2vw, 24px);
+      padding: clamp(10px, 1.8vw, 22px);
+      width: 100%; max-width: 1100px;
+      max-height: calc(100dvh - clamp(12px, 2.5vw, 32px));
+      height: 100%; display: flex; flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+      text-align: center; color: white;
+    }
+    .top-meta-row {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; margin: clamp(2px, 0.5vh, 6px) 0; flex-shrink: 0;
+    }
+    .app-title {
+      font-size: clamp(1.4rem, 2.8vw, 2.4rem); font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(45deg, #f39c12, #f1c40f, #2ecc71);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    .character-container {
+      width: clamp(36px, 4.5vw, 56px); height: clamp(36px, 4.5vw, 56px);
+      background: rgba(255,255,255,0.2); border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      border: 2px solid rgba(255,255,255,0.4);
+      animation: pulseCharacter 3s infinite ease-in-out;
+      font-size: clamp(1.4rem, 2.2vw, 2rem); user-select: none; flex-shrink: 0;
+    }
+    @keyframes pulseCharacter {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .character-happy { animation: celebrate 0.6s ease-in-out infinite alternate; }
+    @keyframes celebrate {
+      0% { transform: translateY(0) scale(1.1); }
+      100% { transform: translateY(-8px) scale(1.1); }
+    }
+    .header-stats {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: clamp(2px, 0.4vh, 6px) 0; font-weight: 700;
+      font-size: clamp(0.85rem, 1.3vw, 1.15rem); flex-shrink: 0;
+    }
+    .streak-badge {
+      background: rgba(255, 255, 255, 0.25);
+      padding: clamp(2px, 0.4vw, 5px) clamp(8px, 1vw, 14px);
+      border-radius: 16px; font-size: clamp(0.8rem, 1.2vw, 1.05rem);
+    }
+    .timer-container {
+      width: 100%; height: clamp(6px, 0.8vh, 10px);
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px; margin-bottom: clamp(6px, 1vh, 12px);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .timer-bar {
+      height: 100%; width: 100%; background: var(--accent);
+      border-radius: 10px; transition: width 1s linear, background-color 0.5s ease;
+    }
+    .card-scene {
+      width: 100%; flex: 1 1 auto; min-height: 120px;
+      margin-bottom: clamp(6px, 1vh, 12px);
+      display: flex;
+    }
+    .card {
+      width: 100%; height: 100%; position: relative;
+      border-radius: clamp(10px, 1.5vw, 18px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      background: white; color: #2d3436;
+      border-bottom: clamp(4px, 0.6vw, 8px) solid var(--primary);
+      display: flex; flex-direction: column; justify-content: flex-start;
+      align-items: center; padding: clamp(10px, 2vw, 20px);
+      overflow-y: auto; scrollbar-width: none;
+    }
+    .card::-webkit-scrollbar { display: none; }
+    .card-label {
+      font-size: clamp(0.75rem, 1.1vw, 1rem);
+      letter-spacing: 1px; color: #636e72;
+      margin-bottom: clamp(4px, 0.8vh, 8px); font-weight: 700; flex-shrink: 0;
+    }
+    .card-text {
+      font-size: clamp(1.1rem, 2vw, 1.8rem); font-weight: 700;
+      line-height: 1.3; text-align: center; word-break: break-word;
+      margin-bottom: clamp(6px, 1.2vh, 12px); flex-shrink: 0;
+    }
+
+    /* MCQ Grid Layout */
+    .options-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: clamp(6px, 1vw, 10px); width: 100%; flex: 1;
+    }
+    .option-btn {
+      background: #f1f2f6; border: 2px solid #dfe4ea;
+      border-radius: clamp(8px, 1vw, 12px);
+      padding: clamp(6px, 1vh, 10px);
       font-size: clamp(0.85rem, 1.3vw, 1.1rem);
       font-weight: 600; color: #2d3436;
       cursor: pointer; transition: all 0.2s ease;
