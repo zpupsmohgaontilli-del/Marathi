@@ -104,28 +104,20 @@
     }
     .card-scene {
       width: 100%; flex: 1 1 auto; min-height: 120px;
-      perspective: 1200px; margin-bottom: clamp(6px, 1vh, 12px);
+      margin-bottom: clamp(6px, 1vh, 12px);
       display: flex;
     }
     .card {
       width: 100%; height: 100%; position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
       border-radius: clamp(10px, 1.5vw, 18px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-    .card.is-flipped { transform: rotateY(180deg); }
-    .card-face {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden;
-      border-radius: clamp(10px, 1.5vw, 18px);
+      background: white; color: #2d3436;
+      border-bottom: clamp(4px, 0.6vw, 8px) solid var(--primary);
       display: flex; flex-direction: column; justify-content: flex-start;
       align-items: center; padding: clamp(10px, 2vw, 20px);
-      background: white; color: #2d3436; overflow-y: auto; scrollbar-width: none;
+      overflow-y: auto; scrollbar-width: none;
     }
-    .card-face::-webkit-scrollbar { display: none; }
-    .card-front { border-bottom: clamp(4px, 0.6vw, 8px) solid var(--primary); }
-    .card-back { background: #fdfbf7; transform: rotateY(180deg); border-bottom: clamp(4px, 0.6vw, 8px) solid var(--accent); justify-content: center; }
+    .card::-webkit-scrollbar { display: none; }
     .card-label {
       font-size: clamp(0.75rem, 1.1vw, 1rem);
       letter-spacing: 1px; color: #636e72;
@@ -136,7 +128,6 @@
       line-height: 1.3; text-align: center; word-break: break-word;
       margin-bottom: clamp(6px, 1.2vh, 12px); flex-shrink: 0;
     }
-    .card-back .card-text { color: #27ae60; font-size: clamp(1.2rem, 2.5vw, 2.4rem); }
 
     /* MCQ Grid Layout */
     .options-grid {
@@ -166,7 +157,7 @@
     }
 
     .button-group {
-      display: grid; grid-template-columns: repeat(3, 1fr);
+      display: grid; grid-template-columns: repeat(2, 1fr);
       gap: clamp(6px, 1vw, 12px); flex-shrink: 0;
     }
     .btn {
@@ -182,8 +173,6 @@
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none; }
     .btn-prev { background: var(--prev-btn); color: white; }
     .btn-prev:hover:not(:disabled) { background: #b84300; }
-    .btn-show { background: var(--accent); color: white; }
-    .btn-show:hover { background: #219150; }
     .btn-next { background: #2980b9; color: white; }
     .btn-next:hover { background: #1f618d; }
     .credits-footer {
@@ -204,8 +193,6 @@
     }
     @media (max-width: 580px) and (orientation: portrait) {
       .options-grid { grid-template-columns: 1fr; }
-      .button-group { grid-template-columns: 1fr 1fr; }
-      .btn-show { grid-column: span 2; order: -1; }
     }
     @media (max-height: 520px) and (orientation: landscape) {
       body { padding: 4px; }
@@ -221,17 +208,17 @@
 <body>
 
 <div class="bg-doodles">
-  <div class="doodle">📖</div>
-  <div class="doodle">📝</div>
-  <div class="doodle">✨</div>
   <div class="doodle">🎯</div>
-  <div class="doodle">💡</div>
+  <div class="doodle">🧠</div>
+  <div class="doodle">⚡</div>
+  <div class="doodle">🌟</div>
+  <div class="doodle">🏆</div>
 </div>
 
 <div class="app-container" id="app">
   <div class="top-meta-row">
-    <h1 class="app-title">शब्द खेळ 📚</h1>
-    <div class="character-container" id="student-avatar">🧑‍🎓</div>
+    <h1 class="app-title">शब्द खेळ 🎯</h1>
+    <div class="character-container" id="student-avatar">🧭</div>
   </div>
 
   <div>
@@ -246,24 +233,17 @@
 
   <div class="card-scene">
     <div class="card" id="card">
-      <div class="card-face card-front">
-        <div class="card-label">📌 प्रश्न</div>
-        <div class="card-text" id="question">प्रश्न लोड होत आहे...</div>
-        <div class="options-grid" id="options-container">
-          <!-- Option buttons inserted dynamically -->
-        </div>
-      </div>
-      <div class="card-face card-back">
-        <div class="card-label">💡 योग्य उत्तर / स्पष्टीकरण</div>
-        <div class="card-text" id="answer">-</div>
+      <div class="card-label">📍 प्रश्न</div>
+      <div class="card-text" id="question">प्रश्न लोड होत आहे...</div>
+      <div class="options-grid" id="options-container">
+        <!-- Option buttons inserted dynamically -->
       </div>
     </div>
   </div>
 
   <div class="button-group">
-    <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()" disabled>⬅️ मागील प्रश्न </button>
-    <button class="btn btn-show" id="btn-show" onclick="flipCard()">👁️ उत्तर पाहा</button>
-    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">पुढील प्रश्न ➡️</button>
+    <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()" disabled>⏮️ मागील प्रश्न</button>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">पुढील प्रश्न ⏭️</button>
   </div>
 
   <div class="credits-footer">
@@ -290,8 +270,6 @@
 
   const questionEl = document.getElementById("question");
   const optionsContainer = document.getElementById("options-container");
-  const answerEl = document.getElementById("answer");
-  const cardEl = document.getElementById("card");
   const timerText = document.getElementById("timer-text");
   const timerBar = document.getElementById("timer-bar");
   const streakEl = document.getElementById("streak");
@@ -323,6 +301,19 @@
     return String(val).trim();
   }
 
+  function getObjectProp(obj, possibleKeys) {
+    if (!obj || typeof obj !== 'object') return "";
+    const lowerObjKeys = {};
+    Object.keys(obj).forEach(k => { lowerObjKeys[k.toLowerCase().trim()] = obj[k]; });
+    for (let key of possibleKeys) {
+      let lKey = key.toLowerCase().trim();
+      if (lowerObjKeys[lKey] !== undefined && lowerObjKeys[lKey] !== null) {
+        return extractString(lowerObjKeys[lKey]);
+      }
+    }
+    return "";
+  }
+
   function normalizeApiResponse(rawItems) {
     if (!Array.isArray(rawItems)) return [];
     const parsed = [];
@@ -347,14 +338,14 @@
         optB = extractString(item[2]);   // Col C: Option B
         optC = extractString(item[3]);   // Col D: Option C
         optD = extractString(item[4]);   // Col E: Option D
-        correct = extractString(item[5]);// Col F: Correct Answer key or value
+        correct = extractString(item[5]);// Col F: Correct Answer
       } else if (typeof item === 'object') {
-        q = extractString(item.q || item.question || item['प्रश्न']);
-        optA = extractString(item.optionA || item.a || item.optA || item['पर्याय A']);
-        optB = extractString(item.optionB || item.b || item.optB || item['पर्याय B']);
-        optC = extractString(item.optionC || item.c || item.optC || item['पर्याय C']);
-        optD = extractString(item.optionD || item.d || item.optD || item['पर्याय D']);
-        correct = extractString(item.correct || item.answer || item.ans || item['उत्तर']);
+        q = getObjectProp(item, ['q', 'question', 'प्रश्न', 'word']);
+        optA = getObjectProp(item, ['optiona', 'a', 'opta', 'पर्याय a', '1', 'opt1', 'option1']);
+        optB = getObjectProp(item, ['optionb', 'b', 'optb', 'पर्याय b', '2', 'opt2', 'option2']);
+        optC = getObjectProp(item, ['optionc', 'c', 'optc', 'पर्याय c', '3', 'opt3', 'option3']);
+        optD = getObjectProp(item, ['optiond', 'd', 'optd', 'पर्याय d', '4', 'opt4', 'option4']);
+        correct = getObjectProp(item, ['correct', 'answer', 'ans', 'उत्तर', 'correctanswer']);
       }
 
       if (q) {
@@ -383,7 +374,6 @@
 
   function fetchQuestions() {
     questionEl.textContent = "प्रश्न लोड होत आहेत...";
-    answerEl.textContent = "-";
     nextBtn.disabled = true;
 
     fetch(API_URL, { method: "GET", redirect: "follow" })
@@ -437,31 +427,17 @@
     const qIndex = historyStack[currentIndex];
     const qItem = questionsData[qIndex];
 
-    cardEl.style.transition = "none";
-    cardEl.classList.remove("is-flipped");
-    
     questionEl.textContent = qItem.q;
-    
-    // Determine correct option text
-    let correctText = qItem.correct;
-    const matchedOpt = qItem.options.find(o => o.key.toLowerCase() === qItem.correct.toLowerCase());
-    if (matchedOpt) {
-      correctText = matchedOpt.key + ") " + matchedOpt.text;
-    }
-    answerEl.textContent = correctText;
 
     // Render options
     optionsContainer.innerHTML = "";
     qItem.options.forEach((opt) => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
-      btn.innerHTML = `<strong>${opt.key})</strong>&nbsp;${opt.text}`;
+      btn.innerHTML = `<strong>${opt.key})</strong>&nbsp;${opt.text || '-'}`;
       btn.onclick = () => checkAnswer(opt, qItem, btn);
       optionsContainer.appendChild(btn);
     });
-
-    void cardEl.offsetWidth;
-    cardEl.style.transition = "transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)";
 
     prevBtn.disabled = (currentIndex <= 0);
     resetTimer();
@@ -473,14 +449,14 @@
 
     const isCorrect = 
       selectedOpt.key.toLowerCase() === qItem.correct.toLowerCase() ||
-      selectedOpt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase();
+      (selectedOpt.text && selectedOpt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase());
 
     const currentQId = historyStack[currentIndex];
 
     if (isCorrect) {
       selectedBtn.classList.add("correct");
       avatar.classList.add("character-happy");
-      avatar.textContent = "🥳";
+      avatar.textContent = "👏";
 
       if (!answeredQuestions.has(currentQId)) {
         answeredQuestions.add(currentQId);
@@ -493,13 +469,13 @@
       }
     } else {
       selectedBtn.classList.add("incorrect");
-      avatar.textContent = "😢";
+      avatar.textContent = "😅";
 
       // Highlight the actual correct button
       qItem.options.forEach((opt, idx) => {
         if (
           opt.key.toLowerCase() === qItem.correct.toLowerCase() ||
-          opt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase()
+          (opt.text && opt.text.trim().toLowerCase() === qItem.correct.trim().toLowerCase())
         ) {
           allOptBtns[idx].classList.add("correct");
         }
@@ -508,7 +484,7 @@
 
     setTimeout(() => {
       avatar.classList.remove("character-happy");
-      avatar.textContent = "🧑‍🎓";
+      avatar.textContent = "🧭";
     }, 1400);
   }
 
@@ -538,10 +514,6 @@
       currentIndex--;
       displayCurrentQuestion();
     }
-  }
-
-  function flipCard() {
-    cardEl.classList.toggle("is-flipped");
   }
 
   function resetTimer() {
