@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>शब्द खेळ - मराठी शब्दसंग्रह (Marathi Vocabulary)</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --primary: #8e44ad;
+      --accent: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --prev-btn: #d35400;
+      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Nirmala UI', sans-serif; }
+    html, body {
+      width: 100vw; height: 100vh; height: 100dvh;
+      overflow: hidden; background: var(--bg-gradient);
+    }
+    body {
+      display: flex; justify-content: center; align-items: center;
+      padding: clamp(6px, 1.2vw, 16px); position: relative;
+    }
+    .bg-doodles {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 1; overflow: hidden;
+    }
+    .doodle {
+      position: absolute; font-size: clamp(1.6rem, 3.5vw, 4rem);
+      opacity: 0.12; animation: float 8s infinite ease-in-out;
+    }
+    .doodle:nth-child(1) { top: 6%; left: 4%; animation-delay: 0s; }
+    .doodle:nth-child(2) { top: 82%; left: 6%; animation-delay: 2s; }
+    .doodle:nth-child(3) { top: 8%; right: 6%; animation-delay: 4s; }
+    .doodle:nth-child(4) { top: 82%; right: 6%; animation-delay: 1s; }
+    .doodle:nth-child(5) { top: 48%; left: 2%; animation-delay: 3s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(6deg); }
+    }
+    .app-container {
+      position: relative; z-index: 2;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: clamp(12px, 2vw, 24px);
+      padding: clamp(10px, 1.8vw, 22px);
+      width: 100%; max-width: 1100px;
+      max-height: calc(100dvh - clamp(12px, 2.5vw, 32px));
+      height: 100%; display: flex; flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+      text-align: center; color: white;
+    }
+    .top-meta-row {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; margin: clamp(2px, 0.5vh, 6px) 0; flex-shrink: 0;
+    }
+    .app-title {
+      font-size: clamp(1.4rem, 2.8vw, 2.4rem); font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(45deg, #f39c12, #f1c40f, #2ecc71);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    .character-container {
+      width: clamp(36px, 4.5vw, 56px); height: clamp(36px, 4.5vw, 56px);
+      background: rgba(255,255,255,0.2); border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      border: 2px solid rgba(255,255,255,0.4);
+      animation: pulseCharacter 3s infinite ease-in-out;
+      font-size: clamp(1.4rem, 2.2vw, 2rem); user-select: none; flex-shrink: 0;
+    }
+    @keyframes pulseCharacter {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .character-happy { animation: celebrate 0.6s ease-in-out infinite alternate; }
+    @keyframes celebrate {
+      0% { transform: translateY(0) scale(1.1); }
+      100% { transform: translateY(-8px) scale(1.1); }
+    }
+    .header-stats {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: clamp(2px, 0.4vh, 6px) 0; font-weight: 700;
+      font-size: clamp(0.85rem, 1.3vw, 1.15rem); flex-shrink: 0;
+    }
+    .streak-badge {
+      background: rgba(255, 255, 255, 0.25);
+      padding: clamp(2px, 0.4vw, 5px) clamp(8px, 1vw, 14px);
+      border-radius: 16px; font-size: clamp(0.8rem, 1.2vw, 1.05rem);
+    }
+    .timer-container {
+      width: 100%; height: clamp(6px, 0.8vh, 10px);
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px; margin-bottom: clamp(6px, 1vh, 12px);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .timer-bar {
+      height: 100%; width: 100%; background: var(--accent);
+      border-radius: 10px; transition: width 1s linear, background-color 0.5s ease;
+    }
+    .card-scene {
+      width: 100%; flex: 1 1 auto; min-height: 120px;
+      perspective: 1200px; margin-bottom: clamp(6px, 1vh, 12px);
+      cursor: pointer; display: flex;
+    }
+    .card {
+      width: 100%; height: 100%; position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+      border-radius: clamp(10px, 1.5vw, 18px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.is-flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: clamp(10px, 1.5vw, 18px);
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center; padding: clamp(10px, 2vw, 24px);
+      background: white; color: #2d3436; overflow-y: auto; scrollbar-width: none;
+    }
+    .card-face::-webkit-scrollbar { display: none; }
+    .card-front { border-bottom: clamp(4px, 0.6vw, 8px) solid var(--primary); }
+    .card-back { background: #fdfbf7; transform: rotateY(180deg); border-bottom: clamp(4px, 0.6vw, 8px) solid var(--accent); }
+    .card-label {
+      font-size: clamp(0.75rem, 1.1vw, 1rem);
+      letter-spacing: 1px; color: #636e72;
+      margin-bottom: clamp(4px, 0.8vh, 8px); font-weight: 700; flex-shrink: 0;
+    }
+    .card-text {
+      font-size: clamp(1.2rem, 2.5vw, 2.5rem); font-weight: 700;
+      line-height: 1.4; text-align: center; word-break: break-word;
+    }
+    .card-back .card-text { color: #27ae60; font-size: clamp(1.2rem, 2.5vw, 2.4rem); }
+    .button-group {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: clamp(6px, 1vw, 12px); flex-shrink: 0;
+    }
+    .btn {
+      padding: clamp(8px, 1.2vh, 14px) clamp(6px, 1vw, 12px);
+      border: none; border-radius: clamp(8px, 1vw, 12px);
+      font-size: clamp(0.75rem, 1.2vw, 1.05rem); font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; white-space: nowrap; user-select: none;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none; }
+    .btn-prev { background: var(--prev-btn); color: white; }
+    .btn-prev:hover:not(:disabled) { background: #b84300; }
+    .btn-show { background: var(--accent); color: white; }
+    .btn-show:hover { background: #219150; }
+    .btn-next { background: #2980b9; color: white; }
+    .btn-next:hover { background: #1f618d; }
+    .credits-footer {
+      margin-top: clamp(6px, 1vh, 12px); font-size: clamp(0.65rem, 0.9vw, 0.85rem);
+      color: rgba(255, 255, 255, 0.85); line-height: 1.4;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: clamp(4px, 0.8vh, 8px); flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 4px; align-items: center;
+    }
+    .credits-footer strong { color: #ffffff; }
+    .visitor-badge-footer {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 10px; border-radius: 12px;
+      font-size: clamp(0.65rem, 0.85vw, 0.8rem);
+      color: #dfe6e9;
+    }
+    @media (max-width: 580px) and (orientation: portrait) {
+      .button-group { grid-template-columns: 1fr 1fr; }
+      .btn-show { grid-column: span 2; order: -1; }
+    }
+    @media (max-height: 520px) and (orientation: landscape) {
+      body { padding: 4px; }
+      .app-container { max-height: 98dvh; padding: 6px 12px; }
+      .top-meta-row { display: none; }
+      .card-scene { min-height: 90px; margin-bottom: 4px; }
+      .button-group { gap: 6px; }
+      .btn { padding: 6px 8px; }
+      .credits-footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-doodles">
+  <div class="doodle">📖</div>
+  <div class="doodle">📝</div>
+  <div class="doodle">✨</div>
+  <div class="doodle">🎯</div>
+  <div class="doodle">💡</div>
+</div>
+
+<div class="app-container" id="app">
+  <div class="top-meta-row">
+    <h1 class="app-title">शब्द खेळ 📚</h1>
+    <div class="character-container" id="student-avatar">🧑‍🎓</div>
+  </div>
+
+  <div>
+    <div class="header-stats">
+      <div>⏱️ वेळ: <span id="timer-text">60</span> से.</div>
+      <div class="streak-badge">⚡ गुण: <span id="streak">0</span></div>
+    </div>
+    <div class="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+  </div>
+
+  <div class="card-scene" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="card-face card-front">
+        <div class="card-label">📌 प्रश्न/शब्द</div>
+        <div class="card-text" id="question">शब्दसंग्रह लोड होत आहे...</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">💡 अर्थ / स्पष्टीकरण (Meaning)</div>
+        <div class="card-text" id="answer">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()" disabled>⬅️ मागील प्रश्न </button>
+    <button class="btn btn-show" id="btn-show" onclick="flipCard()">👁️ उत्तर पाहा</button>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">पुढील प्रश्न ➡️</button>
+  </div>
+
+  <div class="credits-footer">
+    <div>
+      © <strong>Vrushabh H. Borkar</strong> | Graduate Teacher, ZP Upper Primary School, Mohgaon (Tilli)
+    </div>
+    <div class="visitor-badge-footer">
+      👥 एकूण अभ्यासक / भेट देणारे: <strong id="visitor-count">लोड होत आहे...</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzOQIF3IHeBmHFaQdJNuCaDIs_03D7a6j2ZB0SSQQagUIUf7SW45fqd4xYyZNAi2od8aQ/exec";
+
+  let questionsData = [];
+  let unseenPool = [];
+  let historyStack = [];
+  let currentIndex = -1;
+  let timer = 60;
+  let timerInterval = null;
+  let streak = 0;
+  const revealedQuestions = new Set();
+
+  const questionEl = document.getElementById("question");
+  const answerEl = document.getElementById("answer");
+  const cardEl = document.getElementById("card");
+  const timerText = document.getElementById("timer-text");
+  const timerBar = document.getElementById("timer-bar");
+  const streakEl = document.getElementById("streak");
+  const prevBtn = document.getElementById("btn-prev");
+  const nextBtn = document.getElementById("btn-next");
+  const avatar = document.getElementById("student-avatar");
+  const visitorCountEl = document.getElementById("visitor-count");
+
+  function fetchVisitorCount() {
+    const counterKey = "shabd_khel_vrushabh_borkar_visitors";
+    
+    fetch(`https://countapi.mileshilliard.com/api/v1/hit/${counterKey}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.value !== undefined) {
+          visitorCountEl.textContent = Number(data.value).toLocaleString('mr-IN');
+        } else {
+          visitorCountEl.textContent = "1";
+        }
+      })
+      .catch(() => {
+        let localCount = Number(localStorage.getItem("shabd_khel_local_visits") || 0) + 1;
+        localStorage.setItem("shabd_khel_local_visits", localCount);
+        visitorCountEl.textContent = localCount.toLocaleString('mr-IN');
+      });
+  }
+
+  function extractString(val) {
+    if (val === null || val === undefined) return "";
+    if (typeof val === 'string' || typeof val === 'number') return String(val).trim();
+    if (typeof val === 'object') {
+      return String(val.word || val.meaning || val.shabd || val.arth || val.q || val.a || val.question || val.answer || val.text || Object.values(val)[0] || "").trim();
+    }
+    return "";
+  }
+
+  function normalizeApiResponse(rawItems) {
+    if (!Array.isArray(rawItems)) return [];
+    const parsed = [];
+
+    let startIdx = 0;
+    if (Array.isArray(rawItems[0]) && typeof rawItems[0][0] === 'string') {
+      const firstStr = rawItems[0][0].toLowerCase();
+      if (firstStr.includes('word') || firstStr.includes('शब्द') || firstStr.includes('q') || firstStr.includes('प्रश्न')) {
+        startIdx = 1;
+      }
+    }
+
+    for (let i = startIdx; i < rawItems.length; i++) {
+      const item = rawItems[i];
+      if (!item) continue;
+
+      let q = "", a = "";
+
+      if (Array.isArray(item)) {
+        q = extractString(item[0]);
+        a = extractString(item[1]);
+      } else if (typeof item === 'object') {
+        const langObj = item.mr || item.marathi || item.hi || item.en;
+
+        if (langObj && typeof langObj === 'object') {
+          q = extractString(langObj.word || langObj.shabd || langObj.q || langObj['शब्द'] || langObj['प्रश्न']);
+          a = extractString(langObj.meaning || langObj.arth || langObj.a || langObj['अर्थ'] || langObj['उत्तर']);
+        }
+
+        if (!q || !a) {
+          const keys = Object.keys(item);
+          for (const key of keys) {
+            const k = key.trim().toLowerCase();
+            const val = item[key];
+            if (!q && (k.includes('word') || k.includes('शब्द') || k.includes('shabd') || k.includes('q') || k.includes('प्रश्न'))) {
+              q = typeof val === 'object' ? extractString(val.word || val.shabd || val.q || val) : extractString(val);
+            }
+            if (!a && (k.includes('meaning') || k.includes('अर्थ') || k.includes('arth') || k.includes('ans') || k.includes('answer') || k.includes('उत्तर'))) {
+              a = typeof val === 'object' ? extractString(val.meaning || val.arth || val.a || val) : extractString(val);
+            }
+          }
+        }
+
+        if (!q && keys.length >= 2) {
+          q = extractString(item[keys[0]]);
+          a = extractString(item[keys[1]]);
+        }
+      }
+
+      if (q) {
+        parsed.push({ q: q, a: a || "-" });
+      }
+    }
+    return parsed;
+  }
+
+  function initializeUnseenPool() {
+    unseenPool = Array.from({ length: questionsData.length }, (_, i) => i);
+    for (let i = unseenPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unseenPool[i], unseenPool[j]] = [unseenPool[j], unseenPool[i]];
+    }
+  }
+
+  function fetchQuestions() {
+    questionEl.textContent = "शब्दसंग्रह लोड होत आहे...";
+    answerEl.textContent = "-";
+    nextBtn.disabled = true;
+
+    fetch(API_URL, { method: "GET", redirect: "follow" })
+      .then(res => res.json())
+      .then(data => handleRawData(data))
+      .catch(() => loadJSONP(API_URL));
+  }
+
+  function loadJSONP(url) {
+    const callbackName = "handleSheetJSONP_" + Math.round(100000 * Math.random());
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      const el = document.getElementById("jsonp-loader");
+      if (el) document.body.removeChild(el);
+      handleRawData(data);
+    };
+
+    const script = document.createElement("script");
+    script.id = "jsonp-loader";
+    script.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "callback=" + callbackName;
+    script.onerror = function() {
+      questionEl.textContent = "शब्द लोड होऊ शकले नाहीत. कृपया रीफ्रेश करा.";
+      nextBtn.disabled = false;
+    };
+    document.body.appendChild(script);
+  }
+
+  function handleRawData(raw) {
+    let list = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (raw && typeof raw === 'object') {
+      list = raw.data || raw.words || raw.questions || raw.rows || raw.result || Object.values(raw);
+    }
+
+    const parsed = normalizeApiResponse(list);
+    if (parsed.length > 0) {
+      questionsData = parsed;
+      initializeUnseenPool();
+      nextBtn.disabled = false;
+      nextQuestion();
+    } else {
+      questionEl.textContent = "शब्द लोड होऊ शकले नाहीत. कृपया शीट लिंक तपासा.";
+      nextBtn.disabled = false;
+    }
+  }
+
+  function displayCurrentQuestion() {
+    if (!questionsData || questionsData.length === 0) return;
+
+    const qIndex = historyStack[currentIndex];
+    const qItem = questionsData[qIndex];
+
+    cardEl.style.transition = "none";
+    cardEl.classList.remove("is-flipped");
+    
+    questionEl.textContent = extractString(qItem.q);
+    answerEl.textContent = extractString(qItem.a);
+
+    void cardEl.offsetWidth;
+    cardEl.style.transition = "transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)";
+
+    prevBtn.disabled = (currentIndex <= 0);
+    resetTimer();
+  }
+
+  function nextQuestion() {
+    if (questionsData.length === 0) return;
+
+    if (currentIndex < historyStack.length - 1) {
+      currentIndex++;
+    } else {
+      if (unseenPool.length === 0) {
+        initializeUnseenPool();
+        if (historyStack.length > 0 && unseenPool[unseenPool.length - 1] === historyStack[currentIndex]) {
+          const top = unseenPool.pop();
+          unseenPool.unshift(top);
+        }
+      }
+      const nextIdx = unseenPool.pop();
+      historyStack.push(nextIdx);
+      currentIndex++;
+    }
+
+    displayCurrentQuestion();
+  }
+
+  function prevQuestion() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      displayCurrentQuestion();
+    }
+  }
+
+  function flipCard() {
+    const isFlipped = cardEl.classList.toggle("is-flipped");
+
+    if (isFlipped) {
+      const currentQId = historyStack[currentIndex];
+      
+      if (!revealedQuestions.has(currentQId)) {
+        revealedQuestions.add(currentQId);
+        streak++;
+        streakEl.textContent = streak;
+
+        if (typeof confetti === "function") {
+          confetti({
+            particleCount: 45,
+            spread: 60,
+            origin: { y: 0.7 }
+          });
+        }
+      }
+
+      avatar.classList.add("character-happy");
+      avatar.textContent = "🥳";
+
+      setTimeout(() => {
+        avatar.classList.remove("character-happy");
+        avatar.textContent = "🧑‍🎓";
+      }, 1400);
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    timer = 60;
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+      timer--;
+      updateTimerUI();
+
+      if (timer <= 0) {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
+
+  function updateTimerUI() {
+    timerText.textContent = timer;
+    const percentage = (timer / 60) * 100;
+    timerBar.style.width = percentage + "%";
+
+    if (timer > 30) {
+      timerBar.style.backgroundColor = "var(--accent)";
+    } else if (timer > 10) {
+      timerBar.style.backgroundColor = "var(--warning)";
+    } else {
+      timerBar.style.backgroundColor = "var(--danger)";
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    fetchVisitorCount();
+    fetchQuestions();
+  });
+</script>
+</body>
+</html>
