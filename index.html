@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>शब्दखेळ 🎯 - सराव चाचणी</title>
+  
+  <!-- Canvas Confetti Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      --glass-bg: rgba(255, 255, 255, 0.96);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --correct-bg: #dcfce7;
+      --correct-border: #16a34a;
+      --wrong-bg: #fee2e2;
+      --wrong-border: #ef4444;
+      --shadow-xl: 0 15px 35px -10px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden; /* Zero scroll */
+    }
+
+    body {
+      background: var(--bg-gradient);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--text-main);
+      padding: clamp(0.5rem, 1.5vh, 1.2rem) clamp(0.8rem, 2vw, 2rem);
+    }
+
+    .app-container {
+      width: min(96%, 900px);
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-height: calc(100dvh - 70px);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: clamp(0.4rem, 1.5vh, 1rem);
+    }
+
+    .header h1 {
+      font-size: clamp(1.6rem, 4vh, 2.8rem);
+      font-weight: 900;
+      background: linear-gradient(to right, #facc15, #f43f5e, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      line-height: 1.2;
+    }
+
+    .header p {
+      color: #e2e8f0;
+      font-size: clamp(0.8rem, 1.8vh, 1.1rem);
+      font-weight: 500;
+      margin-top: 0.2rem;
+      letter-spacing: 0.3px;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: clamp(0.8rem, 2vh, 1.5rem);
+      padding: clamp(0.9rem, 2.5vh, 1.8rem);
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .card-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+    }
+
+    .badge {
+      background: #e0e7ff;
+      color: #4338ca;
+      font-size: clamp(0.75rem, 1.6vh, 0.95rem);
+      font-weight: 700;
+      padding: clamp(0.25rem, 0.6vh, 0.45rem) clamp(0.6rem, 1vw, 0.9rem);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .student-badge {
+      background: #ecfdf5;
+      color: #047857;
+      max-width: 100%;
+      word-break: break-word;
+    }
+
+    .live-score-badge {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1.5px solid #bfdbfe;
+    }
+
+    .timer-panel {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.65rem;
+      padding: clamp(0.35rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 1rem);
+      margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .timer-text-display {
+      font-weight: 800;
+      font-size: clamp(0.8rem, 1.8vh, 1rem);
+      color: #4338ca;
+      white-space: nowrap;
+      min-width: 100px;
+    }
+
+    .timer-track {
+      flex: 1;
+      height: clamp(6px, 1vh, 8px);
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .timer-progress {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #10b981, #6366f1);
+      border-radius: 999px;
+      transition: width 1s linear;
+    }
+
+    .question-box {
+      font-size: clamp(1rem, 2.4vh, 1.45rem);
+      font-weight: 700;
+      line-height: 1.35;
+      color: #1e293b;
+      margin-bottom: clamp(0.6rem, 1.8vh, 1.2rem);
+      min-height: 2.7em;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Adaptive 2x2 Grid for IFP and Laptop displays */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(0.45rem, 1.2vh, 0.85rem);
+      margin-bottom: clamp(0.6rem, 1.8vh, 1.2rem);
+    }
+
+    @media (min-width: 650px) {
+      .options-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .option-btn {
+      width: 100%;
+      text-align: left;
+      padding: clamp(0.5rem, 1.5vh, 0.9rem) clamp(0.75rem, 1.5vw, 1.1rem);
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: clamp(0.5rem, 1.2vh, 0.85rem);
+      font-size: clamp(0.88rem, 1.8vh, 1.15rem);
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: #6366f1;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    .option-btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .option-btn.correct {
+      background: var(--correct-bg) !important;
+      border-color: var(--correct-border) !important;
+      color: #14532d !important;
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25) !important;
+    }
+
+    .option-btn.wrong {
+      background: var(--wrong-bg) !important;
+      border-color: var(--wrong-border) !important;
+      color: #7f1d1d !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+    }
+
+    .nav-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(0.5rem, 1.2vh, 0.9rem);
+    }
+
+    .nav-btn {
+      padding: clamp(0.55rem, 1.4vh, 0.85rem);
+      border: none;
+      border-radius: clamp(0.5rem, 1.2vh, 0.8rem);
+      font-size: clamp(0.85rem, 1.7vh, 1.05rem);
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: var(--primary-gradient);
+      box-shadow: 0 3px 10px rgba(99, 102, 241, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .nav-btn:disabled {
+      background: #cbd5e1;
+      color: #94a3b8;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .end-btn {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.25);
+    }
+
+    .entry-box, .result-box {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.7rem, 2vh, 1.2rem);
+    }
+
+    .entry-box h2, .result-box h2 {
+      font-size: clamp(1.2rem, 2.8vh, 1.7rem);
+      color: #1e293b;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: clamp(0.6rem, 1.6vh, 0.9rem);
+      border: 2px solid #cbd5e1;
+      border-radius: 0.65rem;
+      font-size: clamp(0.95rem, 1.9vh, 1.15rem);
+      color: #1e293b;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: #6366f1;
+    }
+
+    .score-summary {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 0.85rem;
+      padding: clamp(0.8rem, 2vh, 1.4rem);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.4rem, 1vh, 0.7rem);
+    }
+
+    .score-digits {
+      font-size: clamp(1.8rem, 4.5vh, 2.8rem);
+      font-weight: 900;
+      color: #6366f1;
+    }
+
+    footer {
+      text-align: center;
+      color: #cbd5e1;
+      font-size: clamp(0.75rem, 1.4vh, 0.9rem);
+      margin-top: clamp(0.3rem, 1vh, 0.6rem);
+    }
+
+    .visitor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.25rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 0.3rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .visitor-count-number {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+  </style>
+</head>
+  <body>
+
+  <div class="app-container">
+    <div class="header">
+      <h1>✨ शब्दखेळ 🎯</h1>
+      <p>💡 प्राथमिक व उच्च प्राथमिक इयत्तेसाठी मराठी शब्दसंपत्ती🏆</p>
+    </div>
+
+    <div class="card">
+      <!-- 1. Entry Screen -->
+      <div id="entry-screen" class="entry-box">
+        <h2> आपले नाव लिहा. ✍️</h2>
+        <input 
+          type="text" 
+          id="student-name-input" 
+          class="input-field" 
+          placeholder="तुमचे नाव येथे लिहा..." 
+          autocomplete="off"
+        >
+        <button class="nav-btn" id="start-btn">
+          सराव सुरू करा 🚀
+        </button>
+      </div>
+      
+      <!-- 2. Quiz Interface -->
+      <div id="quiz-box" style="display: none;">
+        <div class="card-top-bar">
+          <span class="badge student-badge" id="student-display-tag">👤 नाव</span>
+          <span class="badge" id="progress-indicator">📝 प्रश्न १ / १०</span>
+          <span class="badge live-score-badge" id="live-score-btn">🏆 गुण: ०</span>
+          <span class="badge" id="score-badge" style="background: #fef08a; color: #854d0e;">⭐ सोडवा</span>
+        </div>
+
+        <div class="timer-panel">
+          <span class="timer-text-display" id="timer-text">⏳ वेळ: ६० सेकंद</span>
+          <div class="timer-track">
+            <div class="timer-progress" id="timer-bar"></div>
+          </div>
+        </div>
+
+        <div class="question-box" id="question-text"></div>
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="nav-buttons">
+          <button class="nav-btn" id="prev-btn">⬅️ मागील प्रश्न</button>
+          <button class="nav-btn" id="next-btn">पुढील प्रश्न ➡️</button>
+          <button class="nav-btn end-btn" id="end-btn">🛑 सराव पूर्ण करा</button>
+        </div>
+      </div>
+
+      <!-- 3. Result Screen -->
+      <div id="result-screen" class="result-box" style="display: none;">
+        <h2>अभिनंदन! 🎉 चाचणी पूर्ण झाली</h2>
+        <div class="score-summary">
+          <p id="result-student-name" style="font-weight: 700; font-size: clamp(1rem, 2vh, 1.25rem); color: #334155; word-break: break-word;"></p>
+          <p>तुमचे एकूण मिळवलेले गुण:</p>
+          <div class="score-digits" id="final-score-text">० / ०</div>
+          <p id="score-remarks" style="font-weight: 600; color: #059669;"></p>
+        </div>
+        <button class="nav-btn" id="restart-btn">🔄 पुन्हा सराव करा</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="visitor-badge">
+      <span>👀 एकूण भेट देणारे:</span>
+      <span id="visitor-count" class="visitor-count-number">...</span>
+    </div>
+    <div class="credit">
+      🌟 &copy; Vrushabh H. Borkar, Graduate Teacher, ZP Upper Primary School, Mohgaon Tilli 🏫
+    </div>
+  </footer>
+      <script>
+    const SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS0n2eFgVShBLqu6M2b6YTKJWgk38m-Gw8ImnAbGI_7WoonyaDLeE3Rw93wfImwBmot-JL1bgYPbt1o";
+    const GVIZ_URL = `${SHEET_BASE}/gviz/tq?tqx=out:json`;
+    const CSV_URL = `${SHEET_BASE}/pub?gid=0&single=true&output=csv`;
+
+    let state = {
+      questions: [],
+      currentIndex: 0,
+      userAnswers: {},
+      studentName: ""
+    };
+
+    let fetchPromise = null;
+    let timerInterval = null;
+    let timeLeft = 60;
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let field = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+        if (c === '"') {
+          if (inQuotes && next === '"') { field += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (c === ',' && !inQuotes) {
+          row.push(field.trim());
+          field = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+          if (c === '\r' && next === '\n') i++;
+          row.push(field.trim());
+          if (row.length > 1 || (row.length === 1 && row[0] !== '')) rows.push(row);
+          row = [];
+          field = '';
+        } else {
+          field += c;
+        }
+      }
+      if (field || row.length > 0) {
+        row.push(field.trim());
+        if (row.length > 1 || (row.length === 1 && row[0] !== '')) rows.push(row);
+      }
+      return rows;
+    }
+
+    function mapRowToQuestion(r) {
+      if (!r || r.length < 5) return null;
+      const q = (r[0] || "").toString().trim();
+      let correctKey = (r[5] || "A").toString().trim().toUpperCase();
+
+      if (correctKey.includes('B') || correctKey === '२' || correctKey === '2') correctKey = 'B';
+      else if (correctKey.includes('C') || correctKey === '३' || correctKey === '3') correctKey = 'C';
+      else if (correctKey.includes('D') || correctKey === '४' || correctKey === '4') correctKey = 'D';
+      else correctKey = 'A';
+
+      if (!q) return null;
+
+      return {
+        question: q,
+        A: (r[1] !== undefined && r[1] !== null) ? r[1].toString().trim() : "पर्याय १",
+        B: (r[2] !== undefined && r[2] !== null) ? r[2].toString().trim() : "पर्याय २",
+        C: (r[3] !== undefined && r[3] !== null) ? r[3].toString().trim() : "पर्याय ३",
+        D: (r[4] !== undefined && r[4] !== null) ? r[4].toString().trim() : "पर्याय ४",
+        correct: correctKey
+      };
+    }
+
+    async function loadData() {
+      // 1. Google Visualization JSON Endpoint (bypasses CORS)
+      try {
+        const gvizRes = await fetch(GVIZ_URL, { cache: 'no-store' });
+        if (gvizRes.ok) {
+          const rawText = await gvizRes.text();
+          const jsonMatch = rawText.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/);
+          if (jsonMatch && jsonMatch[1]) {
+            const data = JSON.parse(jsonMatch[1]);
+            const rows = data.table.rows;
+            const parsed = [];
+            const seen = new Set();
+
+            rows.forEach((rowObj, idx) => {
+              const cells = rowObj.c.map(cell => (cell && cell.v !== undefined && cell.v !== null) ? cell.v : "");
+              if (idx === 0 && (cells[0].toString().toLowerCase().includes("question") || cells[0].toString().includes("प्रश्न"))) {
+                return;
+              }
+              const item = mapRowToQuestion(cells);
+              if (item && !seen.has(item.question)) {
+                seen.add(item.question);
+                parsed.push(item);
+              }
+            });
+
+            if (parsed.length > 0) {
+              state.questions = parsed;
+              return true;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 2. Direct CSV / Proxy Fallback
+      try {
+        let text = null;
+        try {
+          const direct = await fetch(CSV_URL, { cache: 'no-store' });
+          if (direct.ok) text = await direct.text();
+        } catch(e) {}
+
+        if (!text) {
+          try {
+            const proxy = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(CSV_URL)}`);
+            if (proxy.ok) text = await proxy.text();
+          } catch(e) {}
+        }
+
+        if (text) {
+          const rows = parseCSV(text);
+          if (rows && rows.length > 0) {
+            const dataRows = (rows[0] && (rows[0][0].toLowerCase().includes("question") || rows[0][0].includes("प्रश्न")))
+              ? rows.slice(1)
+              : rows;
+
+            const parsed = [];
+            const seen = new Set();
+
+            dataRows.forEach(r => {
+              const item = mapRowToQuestion(r);
+              if (item && !seen.has(item.question)) {
+                seen.add(item.question);
+                parsed.push(item);
+              }
+            });
+
+            if (parsed.length > 0) {
+              state.questions = parsed;
+              return true;
+            }
+          }
+        }
+      } catch(e) {}
+
+      return false;
+    }
+
+    function calculateScore() {
+      let score = 0;
+      Object.keys(state.userAnswers).forEach(idx => {
+        if (state.questions[idx] && state.userAnswers[idx] === state.questions[idx].correct) score++;
+      });
+      return score;
+    }
+
+    function toMarathiNumber(num) {
+      const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      return (num !== undefined && num !== null ? num : 0).toString().replace(/\d/g, d => devanagariDigits[d]);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const isAnswered = state.userAnswers.hasOwnProperty(state.currentIndex);
+
+      if (isAnswered) {
+        document.getElementById('timer-text').innerText = "⏳ वेळ: पूर्ण";
+        document.getElementById('timer-bar').style.width = "0%";
+        return;
+      }
+
+      timeLeft = 60;
+      document.getElementById('timer-text').innerText = `⏳ वेळ: ${toMarathiNumber(timeLeft)} सेकंद`;
+      document.getElementById('timer-bar').style.width = "100%";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer-text').innerText = `⏳ वेळ: ${toMarathiNumber(Math.max(0, timeLeft))} सेकंद`;
+        document.getElementById('timer-bar').style.width = `${Math.max(0, (timeLeft / 60) * 100)}%`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          state.userAnswers[state.currentIndex] = "TIMEOUT";
+          renderQuestion();
+        }
+      }, 1000);
+    }
+
+    async function startPractice() {
+      const input = document.getElementById('student-name-input');
+      const startBtn = document.getElementById('start-btn');
+      const val = input.value.trim();
+
+      if (!val) {
+        alert("कृपया तुमचे नाव लिहा!");
+        input.focus();
+        return;
+      }
+
+      if (state.questions.length === 0) {
+        const originalText = startBtn.innerText;
+        startBtn.innerText = "⏳ सुरू होत आहे...";
+        startBtn.disabled = true;
+
+        if (fetchPromise) {
+          await fetchPromise;
+        } else {
+          await loadData();
+        }
+
+        startBtn.innerText = originalText;
+        startBtn.disabled = false;
+      }
+
+      if (state.questions.length === 0) {
+        alert("Google Sheet मधून प्रश्न लोड करता आले नाहीत. कृपया इंटरनेट कनेक्शन किंवा शीटची लिंक तपासा.");
+        return;
+      }
+
+      state.studentName = val;
+      state.questions = shuffle(state.questions);
+      state.currentIndex = 0;
+      state.userAnswers = {};
+
+      document.getElementById('student-display-tag').innerText = `👤 ${state.studentName}`;
+      document.getElementById('entry-screen').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('quiz-box').style.display = 'block';
+      renderQuestion();
+    }
+
+    function selectAnswer(selectedKey) {
+      if (state.userAnswers.hasOwnProperty(state.currentIndex)) return;
+
+      clearInterval(timerInterval);
+      state.userAnswers[state.currentIndex] = selectedKey;
+      
+      const q = state.questions[state.currentIndex];
+      if (selectedKey === q.correct && typeof confetti === 'function') {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      }
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      startTimer();
+
+      const q = state.questions[state.currentIndex];
+      document.getElementById('progress-indicator').innerText = `📝 प्रश्न ${toMarathiNumber(state.currentIndex + 1)} / ${toMarathiNumber(state.questions.length)}`;
+      document.getElementById('question-text').innerText = `${toMarathiNumber(state.currentIndex + 1)}. ${q.question}`;
+      document.getElementById('live-score-btn').innerText = `🏆 गुण: ${toMarathiNumber(calculateScore())}`;
+
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      const keys = ['A', 'B', 'C', 'D'];
+      const marathiLabels = { 'A': '१', 'B': '२', 'C': '३', 'D': '४' };
+      const selected = state.userAnswers[state.currentIndex];
+
+      const badge = document.getElementById('score-badge');
+      if (selected) {
+        clearInterval(timerInterval);
+        if (selected === "TIMEOUT") {
+          badge.innerText = "⏰ वेळ संपली!";
+          badge.style.background = "#fee2e2";
+          badge.style.color = "#b91c1c";
+        } else {
+          const isRight = selected === q.correct;
+          badge.innerText = isRight ? "🎉 बरोबर उत्तर!" : "❌ चुकीचे उत्तर!";
+          badge.style.background = isRight ? "#dcfce7" : "#fee2e2";
+          badge.style.color = isRight ? "#15803d" : "#b91c1c";
+        }
+      } else {
+        badge.innerText = "⭐ सोडवा";
+        badge.style.background = "#fef08a";
+        badge.style.color = "#854d0e";
+      }
+
+      keys.forEach(key => {
+        const optionValue = q[key] !== undefined ? q[key] : "";
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = `<span><strong>(${marathiLabels[key]})</strong> ${optionValue}</span>`;
+
+        if (selected) {
+          btn.disabled = true;
+          if (key === q.correct) {
+            btn.classList.add('correct');
+            btn.innerHTML += `<span>✔️</span>`;
+          } else if (key === selected) {
+            btn.classList.add('wrong');
+            btn.innerHTML += `<span>❌</span>`;
+          }
+        } else {
+          btn.onclick = () => selectAnswer(key);
+        }
+
+        container.appendChild(btn);
+      });
+
+      document.getElementById('prev-btn').disabled = state.currentIndex === 0;
+      const nextBtn = document.getElementById('next-btn');
+      if (state.currentIndex === state.questions.length - 1) {
+        nextBtn.innerText = "निकाल पहा 📊";
+        nextBtn.onclick = endPractice;
+      } else {
+        nextBtn.innerText = "पुढील प्रश्न ➡️";
+        nextBtn.onclick = nextQuestion;
+      }
+    }
+
+    function nextQuestion() {
+      if (state.currentIndex < state.questions.length - 1) {
+        state.currentIndex++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (state.currentIndex > 0) {
+        state.currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    function endPractice() {
+      clearInterval(timerInterval);
+      const totalScore = calculateScore();
+      const totalQuestions = state.questions.length;
+
+      document.getElementById('quiz-box').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'block';
+
+      document.getElementById('result-student-name').innerText = `विद्यार्थी: ${state.studentName}`;
+      document.getElementById('final-score-text').innerText = `${toMarathiNumber(totalScore)} / ${toMarathiNumber(totalQuestions)}`;
+
+      const remarksElem = document.getElementById('score-remarks');
+      const ratio = totalQuestions > 0 ? (totalScore / totalQuestions) : 0;
+      if (ratio === 1) {
+        remarksElem.innerText = "उत्कृष्ट! सर्व उत्तरे बरोबर आहेत! 🌟🎯";
+        if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+      } else if (ratio >= 0.6) {
+        remarksElem.innerText = "छान प्रयत्न! अजून सराव करा! 👍";
+      } else {
+        remarksElem.innerText = "पुन्हा सराव करून अधिक गुण मिळवा! 📚";
+      }
+    }
+
+    function restartPractice() {
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('entry-screen').style.display = 'flex';
+      document.getElementById('student-name-input').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('start-btn').addEventListener('click', startPractice);
+      document.getElementById('student-name-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') startPractice();
+      });
+      document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+      document.getElementById('end-btn').addEventListener('click', endPractice);
+      document.getElementById('restart-btn').addEventListener('click', restartPractice);
+
+      const visitorElem = document.getElementById('visitor-count');
+      if (visitorElem) {
+        const stored = localStorage.getItem('visitor_count') || Math.floor(1240 + Math.random() * 50);
+        visitorElem.innerText = toMarathiNumber(Number(stored) + 1);
+        localStorage.setItem('visitor_count', Number(stored) + 1);
+      }
+
+      fetchPromise = loadData();
+    });
+  </script>
+</body>
+</html>
+
